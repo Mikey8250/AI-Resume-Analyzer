@@ -1,6 +1,6 @@
 import Navbar from "~/Components/Navbar";
 import type { Route } from "./+types/home";
-import { resumes } from ".react-router/types/Constants";
+import { resumes } from "../../constants";
 import ResumeCard from "~/Components/ResumeCard";
 
 export function meta({}: Route.MetaArgs) {
