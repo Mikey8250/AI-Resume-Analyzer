@@ -62,13 +62,10 @@ function FileUploader({ onFileSelect }: FileUploaderProps) {
                   </p>
                 </div>
               </div>
-
               <button
                 className="p-2 cursor-pointer"
                 onClick={(e) => {
-                  return onFileSelect?.(null);
-
-                  e.preventDefault();
+                  onFileSelect?.(null);
                 }}
               >
                 <img src="/icons/cross.svg" alt="" className="w-4 h-4" />

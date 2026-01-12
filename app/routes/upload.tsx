@@ -1,8 +1,15 @@
+import { prepareInstructions } from "../../constants";
 import React, { useState } from "react";
+import { useNavigate } from "react-router";
 import FileUploader from "~/Components/FileUploader";
 import Navbar from "~/Components/Navbar";
+import { convertPdfToImage } from "~/lib/pdf2img";
+import { usePuterStore } from "~/lib/puter";
+import { generateUUID } from "~/lib/utils";
 
 function Upload() {
+  const { auth, isLoading, fs, ai, kv } = usePuterStore();
+  const navigate = useNavigate();
   const [isProcessing, setIsprocessing] = useState(false);
   const [statusText, setStatusText] = useState("");
 
@@ -12,16 +19,80 @@ function Upload() {
     setFile(file);
   };
 
+  const handleAnalyze = async ({
+    companyName,
+    jobTitle,
+    jobDescription,
+    file,
+  }: {
+    companyName: String;
+    jobTitle: String;
+    jobDescription: String;
+    file: File;
+  }) => {
+    // uploading a file
+    setIsprocessing(true);
+    setStatusText("Uploading a file...");
+    const uploadedFile = await fs.upload([file]);
+
+    if (!uploadedFile) return setStatusText("Error: Failed to upload a file");
+
+    // Converting a pdf file to img
+    setStatusText("Coverting to image...");
+    const imgFile = await convertPdfToImage(file);
+    if (!imgFile.file)
+      return setStatusText("Error: Failed to convert PDF to image");
+
+    // uploading img to puter
+    setStatusText("Uploading the image...");
+    const uploadedImage = await fs.upload([imgFile.file]);
+    if (!uploadedImage) return setStatusText("Failed to upload image");
+    setStatusText("Preparing data...");
+    const uuid = generateUUID();
+    const data = {
+      id: uuid,
+      resumePath: uploadedFile.path,
+      imagePath: uploadedImage.path,
+      companyName,
+      jobTitle,
+      jobDescription,
+      feedback: "",
+    };
+    await kv.set(`resume:${uuid}`, JSON.stringify(data));
+    setStatusText("Analyzing ...");
+    const feedback = await ai.feedback(
+      uploadedFile.path,
+      // Agar instructor ne {} use kiya hai, toh aap bhi karein
+      prepareInstructions({ jobTitle, jobDescription })
+    );
+    if (!feedback) return setStatusText("Error: failed to analyze resume");
+
+    const feedbackText =
+      typeof feedback.message.content === "string"
+        ? feedback.message.content
+        : feedback.message.content[0].text;
+
+    data.feedback = JSON.parse(feedbackText);
+    await kv.set(`resume:${uuid}`, JSON.stringify(data));
+    setStatusText("Analysis complete, redirecting...");
+    console.log(data);
+  };
+
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget.closest("form");
     if (!form) return;
     const formData = new FormData(form);
 
-    const companyName = formData.get("company-name");
-    const jobTitle = formData.get("job-title");
-    const jobDescription = formData.get("job-description");
+    const companyName = formData.get("company-name") as String;
+    const jobTitle = formData.get("job-title") as String;
+    const jobDescription = formData.get("job-description") as String;
     console.log(companyName, jobDescription, jobTitle);
+
+    if (!file) {
+      return;
+    }
+    handleAnalyze({ companyName, jobTitle, jobDescription, file });
   };
   return (
     <main className="bg-[url('images/bg-main.svg')] bg-cover">
