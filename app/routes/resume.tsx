@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
-import Atx from "~/Components/Atx";
+import Ats from "~/Components/Ats";
 import Details from "~/Components/details";
 import Summary from "~/Components/summary";
 import { usePuterStore } from "~/lib/puter";
@@ -53,7 +53,7 @@ function resume() {
 
   return (
     <main className="!pt-0">
-      <nav className="resume-nav">
+      <nav className="resume-nav sticky top-0">
         <Link to={"/"} className="back-button">
           <img src="/icons/back.svg" alt="" className="w-2.5 h-2.5" />
           <span className="text-gray-800 text-sm font-semibold">
@@ -82,7 +82,7 @@ function resume() {
           {Feedback ? (
             <div className="flex flex-col gap-8 animate-in fade-in duration-1000">
               <Summary feedback={Feedback} />
-              <Atx
+              <Ats
                 score={Feedback.ATS.score || 0}
                 suggestions={Feedback.ATS.tips || []}
               />

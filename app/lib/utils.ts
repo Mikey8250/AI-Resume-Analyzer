@@ -1,6 +1,18 @@
+import type { ClassValue } from "clsx";
+import clsx from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+
+
+
 /**
  * Bytes ko KB, MB, ya GB mein convert karne ke liye (TypeScript Version)
  */
+
 export const formatSize = (bytes: number): string => {
   if (bytes === 0) return "0 Bytes";
 
